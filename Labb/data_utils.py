@@ -1,9 +1,7 @@
 import numpy as np
 
-data = np.genfromtxt(
-    "../Data/housing.csv",
-    delimiter=",",
-    names=True,
-    dtype=None,
-    encoding="utf-8")
+def load_data(path, delimiter=",", skip_header=True):
+    with open(path, "r", encoding="utf-8") as f:
+        data = f.readlines()
+    return data
 

@@ -20,16 +20,24 @@ class LinearRegression:
         if y.ndim != 1:
             raise ValueError(f"y must have be a 1D array, got ndim={y.ndim}")
         
+        self.n = X.shape[0]
+        X = np.column_stack((np.ones(self.n), X))
+
         self.X = X
         self.y = y
-        self.n = X.shape[0]
         self.d = X.shape[1] - 1
         self.df = self.n - self.d - 1
 
         XtX = X.T @ X
-        XtX_inv = np.linalg.inv(XtX)
-        Xty = X.T @ y
+        rank = np.linalg.matrix_rank(XtX)
+        p = XtX.shape[0]
 
+        if rank < p:
+            XtX_inv = np.linalg.pinv(XtX)
+        else:
+            XtX_inv = np.linalg.inv(XtX)
+
+        Xty = X.T @ y
         self.beta = XtX_inv @ Xty
         self.XtX_inv = XtX_inv
 
@@ -82,6 +90,9 @@ class LinearRegression:
         return p
     
     def pearson(self):
+        if self.X is None:
+            raise ValueError("Model is not fitted. Call fit(X, y) first).")
+        
         Xf = self.X[:, 1:]
         d = Xf.shape[1]
 
@@ -121,28 +132,15 @@ class LinearRegression:
         upper = self.beta + t_crit * se
         return np.column_stack([lower, upper])
 
-
-
-x = np.array([0,1,2,3], dtype=float)
-y = np.array([2,5.2,7.6,11.1], dtype=float)
-
-X = np.column_stack([np.ones_like(x),x])
-
-model = LinearRegression()
-model.fit(X,y)
-print("beta:", model.beta)
-print("predict:", model.predict(X))
-print("residuals:", model.residuals())
-print("sse:", model.sse())
-print("variance:", model.variance())
-print("std:", model.std())
-print("rmse:", model.rmse())
-print("r2:", model.r2())
-print("f:", model.f_statistic())
-print("p:", model.f_p_value())
-print("beta:", model.beta)
-print("t:", model.t_statistic())
-print("p:", model.t_p_values())
-ci = model.confidence_intervals(0.05)
-print("beta:", model.beta)
-print("CI:", ci)
+    def summary(self):
+        return {
+            "n": self.n,
+            "d": self.d,
+            "df": self.df,
+            "R2": self.r2(),
+            "SSE": self.sse(),
+            "Variance": self.variance(),
+            "RMSE": self.rmse(),
+            "F-statistic": self.f_statistic(),
+            "F p-value": self.f_p_value(),
+        }
