@@ -1,5 +1,6 @@
 import numpy as np
 import scipy.stats as stats
+import pandas as pd
 
 class LinearRegression:
     def __init__(self):
@@ -11,7 +12,7 @@ class LinearRegression:
         self.df = None
 
 
-    def fit(self, X, y):
+    def fit(self, X, y, feature_names=None):
         X = np.asanyarray(X, dtype=float)
         y = np.asanyarray(y, dtype=float)
 
@@ -23,6 +24,7 @@ class LinearRegression:
         self.n = X.shape[0]
         X = np.column_stack((np.ones(self.n), X))
 
+        self.feature_names = feature_names
         self.X = X
         self.y = y
         self.d = X.shape[1] - 1
@@ -40,7 +42,7 @@ class LinearRegression:
         Xty = X.T @ y
         self.beta = XtX_inv @ Xty
         self.XtX_inv = XtX_inv
-
+        
 
     def predict(self, X):
         y_hat = X @ self.beta
@@ -133,14 +135,28 @@ class LinearRegression:
         return np.column_stack([lower, upper])
 
     def summary(self):
-        return {
+        model_df = pd.DataFrame([{
             "n": self.n,
             "d": self.d,
             "df": self.df,
-            "R2": self.r2(),
-            "SSE": self.sse(),
-            "Variance": self.variance(),
-            "RMSE": self.rmse(),
-            "F-statistic": self.f_statistic(),
+            "R2": np.round(self.r2(), 4),
+            "Sigma": np.round(np.sqrt(self.variance()), 4),
+            "Variance": np.round(self.variance(), 4),
+            "RMSE": np.round(self.rmse(), 4),
+            "F-statistic": np.round(self.f_statistic(), 4),
             "F p-value": self.f_p_value(),
-        }
+        }])
+
+        coef_df = pd.DataFrame({
+            "Parameter": self.feature_names,
+            "Beta": np.round(self.beta, 4),
+            "Std.error": np.round(np.sqrt(np.diag(self.covariance_matrix())), 4),
+            "t-värde": np.round(self.t_statistic(), 4),
+            "p-värde": self.t_p_values(),
+            "CI nedre": np.round(self.confidence_intervals()[:, 0], 4),
+            "CI övre": np.round(self.confidence_intervals()[:, 1], 4),
+        })
+
+        return model_df, coef_df
+
+
