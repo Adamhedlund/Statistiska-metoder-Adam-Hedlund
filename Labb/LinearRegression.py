@@ -124,7 +124,7 @@ class LinearRegression:
         p_values = 2 * stats.t.sf(np.abs(t_stats), self.df)
         return p_values
     
-    def confidence_intervals(self, alpha=0.05):
+    def confidence_intervals(self, alpha=0.01):
         df = self.df
         cov = self.covariance_matrix()
         se = np.sqrt(np.diag(cov))
